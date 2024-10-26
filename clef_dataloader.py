@@ -274,7 +274,7 @@ def load_ranking_files(rerank_dir, topk=-1, year=None):
 
 def _load_clef2000_queries(language):
     short2lang = {"en": "E", "fr": "F", "fi": "FI", "de": "D", "it": "I", "sw": "SW", "es": "SP"}
-    long2lang = {"engnlish": "E", "french": "F", "finnish": "FI", "german": "D", "italian": "I", "swedish": "SW", "spanish": "SP"}
+    long2lang = {"english": "E", "french": "F", "finnish": "FI", "german": "D", "italian": "I", "swedish": "SW", "spanish": "SP"}
     if language in short2lang:
         lang = short2lang[language]
     elif language in long2lang:
