@@ -1,8 +1,11 @@
 import os 
-from clef_extractors import *
+from .clef_extractors import *
 
-if not os.environ["CLEF_HOME"] or not os.path.exists(os.environ["CLEF_HOME"]):
+if not os.environ["CLEF_HOME"]: 
   raise RuntimeError("Environment variable CLEF_HOME is not set.")
+
+if not os.path.exists(os.environ["CLEF_HOME"]):
+  raise RuntimeError("Environment variable CLEF_HOME is not a valid path.")
 
 CLEF_BASE_DIR = os.environ["CLEF_HOME"]
 CLEF_LOWRES_DIR = ""

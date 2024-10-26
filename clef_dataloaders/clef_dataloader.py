@@ -4,7 +4,7 @@ import urllib
 
 from typing import Union
 from lxml import html as etree
-from clef_paths import get_lang2pair, PATH_BASE_QUERIES, PATH_BASE_EVAL, CLEF_LOWRES_DIR, all_paths
+from .clef_paths import get_lang2pair, PATH_BASE_QUERIES, PATH_BASE_EVAL, CLEF_LOWRES_DIR, all_paths
 from typing import Tuple, List
 
 
