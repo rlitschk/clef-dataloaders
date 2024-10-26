@@ -141,6 +141,15 @@ def load_queries(language, year: Union[list, str], limit=None, encoding=None, in
     if language == "so" or language == "somali":
         return _load_somali_queries(year)
     
+    if language == "tr" or language == "turkish":
+        return _load_turkish_queries(year)
+    
+    if language == "ug" or language == "uyghur":
+        return _load_uyghur_queries(year)
+    
+    if language == "kg" or language == "kyrgyz":
+        return _load_kyrgyz_queries(year)
+    
     if year == "2000":
         return _load_clef2000_queries(language)
     
@@ -387,5 +396,26 @@ def _load_swahili_queries(year: str):
 def _load_somali_queries(year: str):
     return _load_lowres_queries(
         os.path.join(CLEF_LOWRES_DIR, "clef-en-2000-2003-wo-narrative-Day-2_SOMALI.txt"),
+        year
+    )
+
+
+def _load_kyrgyz_queries(year: str):
+    return _load_lowres_queries(
+        os.path.join(CLEF_LOWRES_DIR, "clef-en-2000-2003_KYRGYZ.txt"),
+        year
+    )
+
+
+def _load_turkish_queries(year: str):
+    return _load_lowres_queries(
+        os.path.join(CLEF_LOWRES_DIR, "clef-en-2000-2003_TURKISH.txt"),
+        year
+    )
+
+
+def _load_uyghur_queries(year: str):
+    return _load_lowres_queries(
+        os.path.join(CLEF_LOWRES_DIR, "clef-en-2000-2003_UYGHUR.txt"),
         year
     )
