@@ -348,18 +348,23 @@ def _load_lowres_queries(filepath: str, year: Union[str, list]):
         lines = [l.strip() for l in f.readlines()]
     qids, _queries = [], []
     
+    is_valid_query_id = []
+    
     # CLEF query ids
     if year == "2001":
         # 2001: 41-90
-        is_valid_query_id = lambda query_id: 0 <= query_id <= 90
+        is_valid_query_id_2001 = lambda query_id: 0 <= query_id <= 90
+        is_valid_query_id.append(is_valid_query_id_2001)
     elif year == "2002":
         # 2002: 91-140
-        is_valid_query_id = lambda query_id: 91 <= query_id <= 140
+        is_valid_query_id_2002 = lambda query_id: 91 <= query_id <= 140
+        is_valid_query_id.append(is_valid_query_id_2002)
     else:
         # 2003: 141-200
         assert year == "2003"
-        is_valid_query_id = lambda query_id: 141 <= query_id <= 200
-      
+        is_valid_query_id_2003 = lambda query_id: 141 <= query_id <= 200
+        is_valid_query_id.append(is_valid_query_id_2003)
+    
     while lines:
         qid_line = lines.pop(0)
         qid = qid_line.split("query_id:")[-1].strip()
@@ -378,8 +383,8 @@ def _load_lowres_queries(filepath: str, year: Union[str, list]):
         
         while lines and lines[0] == "":
             lines.pop(0)
-          
-        if is_valid_query_id(qid):
+        
+        if any(fn(qid) for fn in is_valid_query_id):
             qids.append(qid)
             _queries.append(f"{title} {desc}")
     
