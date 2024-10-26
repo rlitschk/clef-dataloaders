@@ -21,8 +21,11 @@ PATH_BASE_DOCUMENTS = CLEF_BASE_DIR + "DocumentData/"
 PATH_BASE_EVAL = CLEF_BASE_DIR + "RelAssess/"
 
 # Prepare dutch CLEF data paths
-nl_all = (PATH_BASE_DOCUMENTS + "dutch/all/", extract_dutch)
-dutch = {"2001": [nl_all], "2002": [nl_all], "2003": [nl_all]}
+nl_algemeen_dagblad = (PATH_BASE_DOCUMENTS + "dutch/algemeen_dagblad/", extract_dutch)
+nl_nrc_handelsblad = (PATH_BASE_DOCUMENTS + "dutch/nrc_handelsblad/", extract_dutch)
+dutch = {"2001": [nl_algemeen_dagblad, nl_nrc_handelsblad], 
+         "2002": [nl_algemeen_dagblad, nl_nrc_handelsblad], 
+         "2003": [nl_algemeen_dagblad, nl_nrc_handelsblad]}
 
 # Prepare italian CLEF data paths
 it_lastampa = (PATH_BASE_DOCUMENTS + "italian/la_stampa/", extract_italian_lastampa)
