@@ -21,42 +21,54 @@ def _decode_xml(path, encoding):
     return etree.fromstring(xml)
 
 
-def load_relevance_assessments(language: str, year: str, load_non_relevant_docs=False):
-    assert year in ["2001", "2002", "2003"]
-    doc_lang_full = get_lang2pair(language)[1]
-    path = os.path.join(PATH_BASE_EVAL + year, "qrels_" + doc_lang_full)
+def load_relevance_assessments(language: str, year: Union[str, list], load_non_relevant_docs=False):
+    if type(year) == str:
+        assert year in ["2001", "2002", "2003"]
+    else:
+        for y in year:
+            assert y in ["2001", "2002", "2003"]
+    doc_lang_short, doc_lang_full = get_lang2pair(language)
+    if type(year) == str:
+        year = [year]
+    
     positive_list = {}
     negative_list = {}
-    with open(path) as f:
-        for line in f.readlines():
-            tokens = line.rstrip("\n").split(" ")
-            # check if document is relevant for query
-            relevance = int(tokens[len(tokens) - 1])
-            if relevance != 0:
-                query_id = int(tokens[0].strip())
-                document_id = tokens[2].strip()
-                if query_id not in positive_list:
-                    relevant_docs = [document_id]
-                else:
-                    relevant_docs = positive_list[query_id]
-                    relevant_docs.append(document_id)
-                positive_list[query_id] = relevant_docs
-              
-            if load_non_relevant_docs and relevance == 0:
-                query_id = int(tokens[0].strip())
-                document_id = tokens[2].strip()
-                if query_id not in negative_list:
-                    non_relevant_docs = [document_id]
-                else:
-                    non_relevant_docs = negative_list[query_id]
-                    non_relevant_docs.append(document_id)
-                negative_list[query_id] = non_relevant_docs
-          
+    for y in year:
+        path = os.path.join(PATH_BASE_EVAL + y, "qrels_" + doc_lang_full)
+        if not os.path.exists(path):
+            path = os.path.join(PATH_BASE_EVAL + y, "qrels_" + doc_lang_short.upper())
+        if not os.path.exists(path):
+            continue
+        with open(path) as f:
+            for line in f.readlines():
+                tokens = line.rstrip("\n").split(" ")
+                # check if document is relevant for query
+                relevance = int(tokens[len(tokens) - 1])
+                if relevance != 0:
+                    query_id = int(tokens[0].strip())
+                    document_id = tokens[2].strip()
+                    if query_id not in positive_list:
+                        relevant_docs = [document_id]
+                    else:
+                        relevant_docs = positive_list[query_id]
+                        relevant_docs.append(document_id)
+                    positive_list[query_id] = relevant_docs
+                
+                if load_non_relevant_docs and relevance == 0:
+                    query_id = int(tokens[0].strip())
+                    document_id = tokens[2].strip()
+                    if query_id not in negative_list:
+                        non_relevant_docs = [document_id]
+                    else:
+                        non_relevant_docs = negative_list[query_id]
+                        non_relevant_docs.append(document_id)
+                    negative_list[query_id] = non_relevant_docs
+    
     result = negative_list if load_non_relevant_docs else positive_list
     return result
 
 _docs_cache = {}
-def load_documents(language, year, limit_documents=None, only_body=False, **kwargs):
+def load_documents(language: str, year:Union[list, str], limit_documents:int=None, only_body:bool=False, **kwargs):
     """
     Walks through document files and extracts content.
     :param language: corpus language
@@ -114,11 +126,11 @@ def load_documents(language, year, limit_documents=None, only_body=False, **kwar
             _docs_cache[key] = (doc_ids, documents)
     else:
         doc_ids, documents = _docs_cache[key]
-      
+    
     return doc_ids, documents
 
 
-def load_queries(language, year, limit=None, encoding=None, include_desc=True) -> Tuple[List, List]:
+def load_queries(language, year: Union[list, str], limit=None, encoding=None, include_desc=True) -> Tuple[List, List]:
     language = language.lower()
     
     if language == "sw" or language == "swahili":
@@ -130,32 +142,37 @@ def load_queries(language, year, limit=None, encoding=None, include_desc=True) -
     if year == "2000":
         return _load_clef2000_queries(language)
     
-    lang_iso, lang_full = get_lang2pair(language)
-    path = os.path.join(PATH_BASE_QUERIES + year, "Top-" + lang_iso + year[-2:] + ".txt")
-    
-    if not encoding:
-        encoding = 'UTF-8' if lang_iso == "ru" or lang_full == "russian" in path else 'ISO-8859-1'
-      
-    tree = _decode_xml(path, encoding)
-    tag_title = lang_iso + '-title'
-    tag_desc = lang_iso + '-desc'
-    # tag_narr = language_tag + '-narr'
-    
     queries = []
     ids = []
-    for i, topic in enumerate(list(tree)):
-        _id = topic.findtext('num').strip() # e.g. 'C041'
-        _id = int(_id[1:]) # e.g. 41
-        title = topic.findtext(tag_title)
-        if include_desc:
-            desc = topic.findtext(tag_desc)
-            query = ' '.join([title, desc])
-        else:
-            query = title
-        queries.append(query)
-        ids.append(_id)
-        if i == limit:
-            break
+    lang_iso, lang_full = get_lang2pair(language)
+    
+    if type(year) == str:
+        year = [year]
+      
+    for y in year:
+        path = os.path.join(PATH_BASE_QUERIES + y, "Top-" + lang_iso + y[-2:] + ".txt")
+        
+        if not encoding:
+            encoding = 'UTF-8' if lang_iso == "ru" or lang_full == "russian" in path else 'ISO-8859-1'
+        
+        tree = _decode_xml(path, encoding)
+        tag_title = lang_iso + '-title'
+        tag_desc = lang_iso + '-desc'
+        # tag_narr = language_tag + '-narr'
+        
+        for i, topic in enumerate(list(tree)):
+            _id = topic.findtext('num').strip() # e.g. 'C041'
+            _id = int(_id[1:]) # e.g. 41
+            title = topic.findtext(tag_title)
+            if include_desc:
+                desc = topic.findtext(tag_desc)
+                query = ' '.join([title, desc])
+            else:
+                query = title
+            queries.append(query)
+            ids.append(_id)
+            if i == limit:
+                break
         
     # newly added:
     # queries = [q.replace("\n", " ").replace("\r", " ") for q in queries]
@@ -163,9 +180,9 @@ def load_queries(language, year, limit=None, encoding=None, include_desc=True) -
     return ids, queries
 
 
-def load_clef(query_lang: str, doc_lang: str, year: str = "2003", limit_documents=None, **kwargs):
-    year = str(year)
-    assert year in ["2001", "2002", "2003", "all"]
+def load_clef(query_lang: str, doc_lang: str, year: Union[str, list] = "2003", limit_documents=None, **kwargs):
+    # year = str(year)
+    # assert year in ["2001", "2002", "2003", "all"]
     
     query_lang_iso, query_lang_full = get_lang2pair(query_lang)
     
@@ -186,7 +203,7 @@ def load_clef(query_lang: str, doc_lang: str, year: str = "2003", limit_document
     return doc_ids, documents, query_ids, queries, relass
 
 
-def load_clef_rerank(dlang: str, qlang: str, rerank_dir: str, topk: int, include_desc: bool=True):
+def load_clef_rerank(dlang: str, qlang: str, rerank_dir: str, topk: int, include_desc: bool=True, year: Union[int, str]="2003"):
     """
     For efficiency, we only load a document if it's within the top-k of any query.
     :param dlang: ISO-code of document language
@@ -194,15 +211,46 @@ def load_clef_rerank(dlang: str, qlang: str, rerank_dir: str, topk: int, include
     :param rerank_dir: directory containing one file for each query (filename = query-id), content: list of document-ids (=pre-ranking).
     :param topk: cut-off, number of documents to re-rank for each query
     :param include_desc: clef description 
+    :param year: clef year
     :return: document ids, documents, queries, query ids, relevance assessments, list of top-k document ids for each query (=input to be re-ranked)
     """
-    rerank_corpus = set()
+
+    qid2topk_rerank, rerank_corpus = load_ranking_files(rerank_dir, topk, year)
+    
+    doc_ids, documents, query_ids, queries, relass = load_clef(
+        query_lang=qlang,
+        doc_lang=dlang,
+        rerank_corpus=rerank_corpus,
+        include_desc=include_desc,
+        year=year)
+    return doc_ids, documents, queries, query_ids, relass, qid2topk_rerank
+
+
+def load_ranking_files(rerank_dir, topk=-1, year=None):
     qid2topk_rerank = {}
-    tmp = os.listdir(rerank_dir)
-    for elem in tmp:
-        qid = int(elem.split("/")[-1][:-4])
+    rerank_corpus = set()
+
+    if year == "2001":
+        qid_begin = 0
+        qid_end = 90
+    elif year == "2002":
+        qid_begin = 91
+        qid_end = 140
+    elif year == "2003":
+        qid_begin = 141
+        qid_end = 200
+    else:
+        # for hc4
+        qid_begin = 0
+        qid_end = float('inf')
+
+    paths = [elem for elem in os.listdir(rerank_dir) if qid_begin <= int(elem.split(".")[0]) <= qid_end]
+    paths = sorted([e for e in paths], key=lambda elem: int(elem.split(".")[0]))
+
+    for p in paths:
+        qid = int(p.split("/")[-1][:-4])
         rerank_doc_ids = []
-        with open(rerank_dir + elem, "r") as f:
+        with open(os.path.join(rerank_dir, p), "r") as f:
             for i, did_score in enumerate(f):
                 did = did_score.split("\t")[0]
                 did = did.strip()
@@ -210,13 +258,7 @@ def load_clef_rerank(dlang: str, qlang: str, rerank_dir: str, topk: int, include
                 if i < topk:
                     rerank_corpus.add(did)
         qid2topk_rerank[qid] = rerank_doc_ids
-      
-    doc_ids, documents, query_ids, queries, relass = load_clef(
-        query_lang=qlang,
-        doc_lang=dlang,
-        rerank_corpus=rerank_corpus,
-        include_desc=include_desc)
-    return doc_ids, documents, queries, query_ids, relass, qid2topk_rerank
+    return qid2topk_rerank, rerank_corpus
 
 
 def _load_clef2000_queries(language):
@@ -285,8 +327,8 @@ def _load_clef2000_queries(language):
         queries.append(f"{topic['title']} {topic['desc']}")
     return qids, queries
 
-
-def _load_lowres_queries(filepath: str, year: str):
+# TODO: move UG, TR, KG into separate folder, away from long_paper folder to rlitschk folder
+def _load_lowres_queries(filepath: str, year: Union[str, list]):
     if not os.path.exists(filepath):
         url = "https://ciir.cs.umass.edu/downloads/ictir19_simulate_low_resource/ictir19_simulate_low_resource.zip"
         raise FileNotFoundError(f"Please download\n\n{url}\n\nand set CLEF_LOWRES_DIR in paths.py")
