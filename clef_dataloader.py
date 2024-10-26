@@ -96,7 +96,7 @@ def load_documents(language: str, year:Union[list, str], limit_documents:int=Non
         return ids, docs
     
     doc_lang_iso, doc_lang_full = get_lang2pair(language)
-    key = f"{doc_lang_iso}_{limit_documents}"
+    key = f"{doc_lang_iso}_{year}_{limit_documents}"
     
     # Always load corpus if we do re-ranking.
     do_reranking = bool(kwargs.get("rerank_corpus", False))
