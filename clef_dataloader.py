@@ -1,6 +1,8 @@
 import os
 import codecs
 import urllib
+
+from typing import Union
 from lxml import html as etree
 from clef_paths import get_lang2pair, PATH_BASE_QUERIES, PATH_BASE_EVAL, CLEF_LOWRES_DIR, all_paths
 from typing import Tuple, List
@@ -13,7 +15,7 @@ def _decode_xml(path, encoding):
     else:
         with codecs.open(path, encoding=encoding) as f:
             xml = f.read()
-        
+    
     xml = xml.replace("<BODY>", "<BODYY>").replace("</BODY>", "</BODYY>")
     xml = xml.replace("<HEAD>", "<HEADD>").replace("</HEAD>", "</HEADD>")
     xml = "<root>" + xml + "</root>"
@@ -274,7 +276,7 @@ def _load_clef2000_queries(language):
     encoding = 'UTF-8' if lang == "ru" or lang == "russian" else 'ISO-8859-1'
     with codecs.open(os.path.join(PATH_BASE_QUERIES, "topics2000", f"TOP-{lang}.txt"), encoding=encoding) as f:
         lines = f.readlines()
-      
+    
     topics = []
     topic = {}
     lines = iter(lines)
@@ -282,11 +284,11 @@ def _load_clef2000_queries(language):
         line = line.strip()
         if line == "":
             continue
-            
+        
         elif line.startswith("<num>"):
             assert 'num' not in topic
             topic['num'] = line.replace("<num>", "").strip()
-
+        
         elif line.startswith(f"<{lang}-desc>"):
             desc = []
             line = next(lines).strip()
@@ -295,12 +297,12 @@ def _load_clef2000_queries(language):
                 line = next(lines).strip()
             assert 'desc' not in topic
             topic['desc'] = " ".join(desc)
-            
+        
         elif line.startswith(f"<{lang}-title>"):
             line = next(lines).strip()
             assert 'title' not in topic
             topic['title'] = line
-            
+        
         elif line.startswith(f"<{lang}-narr>"):
             narr = []
             line = next(lines).strip()
@@ -310,14 +312,14 @@ def _load_clef2000_queries(language):
                 line = next(lines).strip()
             assert 'narr' not in topic
             topic['narr'] = " ".join(narr)
-
+        
         else:
             assert line.strip() in ["<top>", "</top>"]
             if topic:
                 assert all([tag in topic for tag in ['num', 'title', 'desc', 'narr']])
                 topics.append(topic)
             topic = {}
-        
+    
     if topic: topics.append(topic)
     
     queries = []
@@ -364,14 +366,14 @@ def _load_lowres_queries(filepath: str, year: Union[str, list]):
             desc_line = lines.pop(0)
             desc_p2 = desc_line.split("description:")[-1]
             desc = f"{desc} {desc_p2}"
-          
+        
         while lines and lines[0] == "":
             lines.pop(0)
           
         if is_valid_query_id(qid):
             qids.append(qid)
             _queries.append(f"{title} {desc}")
-        
+    
     return qids, _queries
 
 
